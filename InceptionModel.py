@@ -27,22 +27,24 @@ x = Dropout(0.4)(x)
 predictions = Dense(CLASSES, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-# Transfer learning, have all weights be none trainable except those connected to output nodes
-# We aren't changing any layers that handle convolution for the moment
-for layer in base_model.layers:
+# Unfreeze the last three inception modules
+for layer in model.layers[:229]:
     layer.trainable = False
+for layer in model.layers[229:]:
+    layer.trainable = True
 
 # Compile model with loss function and optimizers.
-opt = k.optimizers.RMSprop(learning_rate=0.01, decay=0.9, epsilon=0.1)
+opt2 = k.optimizers.SGD()
+opt = k.optimizers.RMSprop(learning_rate=0.003, decay=0.9, epsilon=0.1)
 model.compile(optimizer=opt,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
 # Define used variables.
-EPOCHS = 250
+EPOCHS = 10
 BATCH_SIZE = 32
-STEPS_PER_EPOCH = 936
-VALIDATION_STEPS = 128
+STEPS_PER_EPOCH = 1406
+VALIDATION_STEPS = 32
 WIDTH = 299
 HEIGHT = 299
 
@@ -54,7 +56,7 @@ TEST_DIR = 'E:/Generate/Test'
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
     rotation_range=30,
-    brightness_range=[0.65,1.4],
+    brightness_range=[0.5,1.5],
     width_shift_range=0.1,
     height_shift_range=0.1,
     shear_range=0.1,
@@ -65,13 +67,13 @@ train_datagen = ImageDataGenerator(
 validation_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
     rotation_range=30,
-    brightness_range=[0.65, 1.4],
+    brightness_range=[0.5, 1.5],
     width_shift_range=0.1,
     height_shift_range=0.1,
     shear_range=0.1,
     zoom_range=0.1,
     horizontal_flip=True,
-    fill_mode='reflect') 
+    fill_mode='reflect')
 
 train_generator = train_datagen.flow_from_directory(
     TRAIN_DIR,
@@ -90,7 +92,7 @@ validation_generator = validation_datagen.flow_from_directory(
 MODEL_FILE = 'Inception.model'
 
 # Set Checkpoint
-filepath = "Inception-model-{epoch:02d}-.model"
+filepath = "Inception-BATCH " + str(BATCH_SIZE) + "-0515BRIGHTNESS-{epoch:02d}-.model"
 checkpoint = k.callbacks.callbacks.ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, mode='max')
 
 def my_gen(gen):
@@ -100,6 +102,9 @@ def my_gen(gen):
             yield data, labels
         except:
             pass
+
+
+
 
 # Begin fitting model
 history = model.fit_generator(

@@ -4,13 +4,15 @@ from keras.preprocessing import image
 from keras.applications.mobilenet_v2 import preprocess_input
 from keras.models import load_model
 from glob import glob
+import tensorboard
 
 HEIGHT = 299
 WIDTH = 299
-MODEL_FILE = 'filename.model'
-test_dir = 'E:/SkinDirectory/Test'
-benign_imgs = glob('E:/SkinDirectory/Test/Naevus/*')
-mal_imgs = glob('E:/SkinDirectory/Test/Melanoma/*')
+MODEL_FILE = 'C:/PycharmProjects/Github Repositories/MelanomaProject/Models/Inception V3/06-02-2020 71% acc without ' \
+             'overfitting/Inception-BATCH 32-0515BRIGHTNESS-01-.model '
+test_dir = 'E:/SkinDirectory/Train'
+benign_imgs = glob('E:/SkinDirectory/Independent/Naevus/*')
+mal_imgs = glob('E:/SkinDirectory/Independent/Melanoma/*')
 
 loaded_model = load_model(MODEL_FILE)
 
@@ -25,18 +27,21 @@ benign_no = 0
 mal_no = 0
 count = 0
 print('Predicting Malignant')
+print(len(mal_imgs))
 for mal in mal_imgs:
     img = image.load_img(mal, target_size=(HEIGHT, WIDTH))
     preds = predict(img)
     keras.backend.clear_session()
     count = count + 1
     print(str(count) + ' ' +  str(preds[0]) + ' ' + str(preds[1]))
+    print(mal)
     if preds[1] > preds[0]:
         print('Benign')
         benign_no = benign_no + 1
     elif preds[0] > preds[1]:
         print('Malignant')
         mal_no = mal_no + 1
+
 
 print('\nFinal Mal accuracy is :', end='')
 mal_acc = mal_no/len(mal_imgs)
@@ -63,11 +68,27 @@ for benign in benign_imgs:
         mal_no = mal_no + 1
 
 print('\nFinal Benign accuracy is :', end='')
-benign_acc = benign_no/len(benign_imgs)
+if len(benign_imgs) is not 0 :
+    benign_acc = benign_no/len(benign_imgs)
+else :
+    benign_acc = 'N/A'
 print(benign_acc)
 
 
 
 
-print('Overall : ' + benign_acc + ' %benign acc')
-print('Overall : ' + mal_acc + ' %benign acc')
+print('Overall : ' + str(benign_acc) + ' %benign acc')
+print('Overall : ' + str(mal_acc) + ' %mal acc')
+
+
+
+def test(pic):
+    img = image.load_img(pic, target_size=(HEIGHT, WIDTH))
+    preds = predict(img)
+    keras.backend.clear_session()
+    print(str(count) + ' ' + str(preds[0]) + ' ' + str(preds[1]))
+    print(mal)
+    if preds[1] > preds[0]:
+        print('Benign')
+    elif preds[0] > preds[1]:
+        print('Malignant')
