@@ -3,10 +3,10 @@ from sklearn.model_selection import train_test_split
 import os
 import shutil
 
-path = 'E:/SkinDirectory/Train/Naevus\\'
+path = 'E:/Generate/Train/Naevus\\'
 
 
-files_to_rename = glob('E:/SkinDirectory/Train/Naevus/*')
+files_to_rename = glob('E:/Generate/Train/Naevus/*')
 
 # File rename file to a number
 count = 0

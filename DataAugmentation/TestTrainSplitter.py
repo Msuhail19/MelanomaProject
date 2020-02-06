@@ -1,4 +1,6 @@
 from glob import glob
+
+import numpy as np
 from sklearn.model_selection import train_test_split
 import os
 import shutil
@@ -7,14 +9,14 @@ import shutil
 # First seperate mole images randomly into train and test
 # Create train and test directories
 
-melanoma = glob('E:/SkinDirectory/Train/Melanoma/*')
-benign = glob('E:/SkinDirectory/train/naevus/*')
-test_dir = 'E:/SkinDirectory/Test'
-benign_dir = 'E:/SkinDirectory/test/Naevus'
-melanoma_dir = 'E:/SkinDirectory/test/Melanoma'
+melanoma = glob('E:/Generate/Train/Melanoma/*')
+benign = glob('E:/Generate/Train/naevus/*')
+test_dir = 'E:/Generate/Test'
+benign_dir = 'E:/Generate/Test/Naevus'
+melanoma_dir = 'E:/Generate/Test/Melanoma'
 
-melanoma_train, melanoma_test = train_test_split(melanoma, test_size=0.30)
-benign_train, benign_test = train_test_split(benign, test_size=0.10)
+melanoma_train, melanoma_test = train_test_split(melanoma, test_size=0.20, random_state=np.random)
+benign_train, benign_test = train_test_split(benign, test_size=0.20, random_state=np.random)
 
 # Create new Directory test
 os.mkdir(test_dir)

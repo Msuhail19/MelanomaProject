@@ -1,5 +1,6 @@
 # Import all libraries
 import datetime
+import keras as k
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras.models import Model
@@ -32,42 +33,45 @@ for layer in base_model.layers:
     layer.trainable = False
 
 # Compile model with loss function and optimizers.
-model.compile(optimizer='rmsprop',
+opt = k.optimizers.RMSprop(learning_rate=0.01, decay=0.9, epsilon=0.1)
+model.compile(optimizer=opt,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
 # Define used variables.
-EPOCHS = 10
-BATCH_SIZE = 64
-STEPS_PER_EPOCH = 20
+EPOCHS = 250
+BATCH_SIZE = 32
+STEPS_PER_EPOCH = 936
 VALIDATION_STEPS = 128
 WIDTH = 299
 HEIGHT = 299
 
 # Define directories
-TRAIN_DIR = 'E:/SkinDirectory/train'
-TEST_DIR = 'E:/SkinDirectory/test'
+TRAIN_DIR = 'E:/Generate/Train'
+TEST_DIR = 'E:/Generate/Test'
 
 # data prep
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
-    rotation_range=40,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
+    rotation_range=30,
+    brightness_range=[0.65,1.4],
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
     horizontal_flip=True,
-    fill_mode='nearest')
+    fill_mode='reflect')
 
 validation_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
-    rotation_range=40,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
+    rotation_range=30,
+    brightness_range=[0.65, 1.4],
+    width_shift_range=0.1,
+    height_shift_range=0.1,
+    shear_range=0.1,
+    zoom_range=0.1,
     horizontal_flip=True,
-    fill_mode='nearest')
+    fill_mode='reflect') 
 
 train_generator = train_datagen.flow_from_directory(
     TRAIN_DIR,
@@ -85,12 +89,25 @@ validation_generator = validation_datagen.flow_from_directory(
 # File name is
 MODEL_FILE = 'Inception.model'
 
+# Set Checkpoint
+filepath = "Inception-model-{epoch:02d}-.model"
+checkpoint = k.callbacks.callbacks.ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False, mode='max')
+
+def my_gen(gen):
+    while True:
+        try:
+            data, labels = next(gen)
+            yield data, labels
+        except:
+            pass
+
 # Begin fitting model
 history = model.fit_generator(
-    train_generator,
+    my_gen(train_generator),
     epochs=EPOCHS,
+    callbacks=[checkpoint],
     steps_per_epoch=STEPS_PER_EPOCH,
-    validation_data=validation_generator,
+    validation_data=my_gen(validation_generator),
     validation_steps=VALIDATION_STEPS)
 
 model.save(MODEL_FILE)
