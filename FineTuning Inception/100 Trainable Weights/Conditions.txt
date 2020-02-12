@@ -1,0 +1,2 @@
+100 trainable weights,
+Batch Size 16

@@ -7,12 +7,12 @@ import shutil
 
 # Folder to generate large number of images
 
-img_to_aug = sorted(glob('E:/SkinDirectory/Train/naevus/*'))
+img_to_aug = sorted(glob('E:/Generate/Gen/*.*'))
 print(img_to_aug)
-save_dir = 'E:/SkinDirectory/Generate/Generated/naevus'  # save gen files to following dir
+save_dir = 'E:/Generate/Gen/Generate Naevus'  # save gen files to following dir
 # times per image to gen randomised version
-rotated_to_create = 2
-no_files_transform = 0
+rotated_to_create = 5
+no_files_transform = 2
 
 
 # THE FOLLOWING CODE TAKES A RECTANGLE, ROTATES IT
@@ -72,11 +72,7 @@ for image in img_to_aug:
         right = (width + new_width) / 2
         bottom = (height + new_height) / 2
 
-        # crop and save
-        if x != 1:
-            rotated1 = rotated.crop((left, top, right, bottom))
-        else:
-            rotated1 = img
+        rotated1 = rotated.crop((left, top, right, bottom))
 
         try:
             rotated1.save(save_dir + '/GEN' + str(count) + '-RC-' + str(x) + '-' + str(rand) + '.jpg')
@@ -85,7 +81,7 @@ for image in img_to_aug:
     count += 1
 
 datagen = ImageDataGenerator(
-    brightness_range=[0.4, 1.65],
+    brightness_range=[0.8, 1.2],
     horizontal_flip=True,
     fill_mode='reflect', )
 

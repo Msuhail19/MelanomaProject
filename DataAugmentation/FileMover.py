@@ -3,15 +3,21 @@ from sklearn.model_selection import train_test_split
 import os
 import shutil
 
-dir = 'E:/PetImages/test/Dog'
 IMAGE_PATH = 'C:/Users/Msuha/OneDrive/Pictures/Melanoma Pictures/Images'
+
+# Path for the json files of melanoma images, benign images.
 BENIGN_PATH = 'C:/Users/Msuha/OneDrive/Pictures/Melanoma Pictures/FinalDirectory/Benign'
 MALIGNANT_PATH = 'C:/Users/Msuha/OneDrive/Pictures/Melanoma Pictures/FinalDirectory/Malignant'
+
+# Destination of Images to move to
+dest = 'C:/Users/Msuha/OneDrive/Pictures/Melanoma Pictures/FinalDirectory/Malignant Images/'
 
 # select all json files relevant
 benign_json = glob(BENIGN_PATH + "/*.json")
 maglinant_json = glob(MALIGNANT_PATH + "/*.json")
 
+
+# The code below just memorises files selected in the malignant directory
 count = 0
 list_of_names_malignant = []
 print("Select file names")
@@ -21,10 +27,9 @@ for b in maglinant_json:
     list_of_names_malignant.append(newv)
 print(list_of_names_malignant)
 
-
-print("Begin finding images")
+# The code below moves the corresponding malignant images
+print("Begin finding images corresponding to malignant path")
 img_file = []
-dest = 'C:/Users/Msuha/OneDrive/Pictures/Melanoma Pictures/FinalDirectory/Malignant Images/'
 # Use each new file to find corresponding image, and
 for name in list_of_names_malignant:
     path = IMAGE_PATH + "/" + name + ".*"

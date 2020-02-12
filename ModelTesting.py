@@ -1,20 +1,21 @@
 import numpy as np
 import keras
 from keras.preprocessing import image
-from keras.applications.mobilenet_v2 import preprocess_input
+from keras.applications.inception_v3 import preprocess_input
 from keras.models import load_model
 from glob import glob
 import tensorboard
 
+
 HEIGHT = 299
 WIDTH = 299
-MODEL_FILE = 'C:/PycharmProjects/Github Repositories/MelanomaProject/Models/Inception V3/06-02-2020 71% acc without ' \
-             'overfitting/Inception-BATCH 32-0515BRIGHTNESS-01-.model '
+MODEL_FILE = 'FineTuning Inception/187 Trainable Weights/Inception3-BATCH 16-0515BRIGHTNESS-09-.model'
 test_dir = 'E:/SkinDirectory/Train'
-benign_imgs = glob('E:/SkinDirectory/Independent/Naevus/*')
-mal_imgs = glob('E:/SkinDirectory/Independent/Melanoma/*')
+benign_imgs = glob('E:/Original/Independent/Naevus No Sticker/*')
+mal_imgs = glob('E:/Original/Independent/Melanoma/*')
 
 loaded_model = load_model(MODEL_FILE)
+loaded_model.is_trainable = True
 
 def predict(img):
     x = image.img_to_array(img)
@@ -59,6 +60,7 @@ for benign in benign_imgs:
     keras.backend.clear_session()
     count = count + 1
     print(str(count) + ' ' +  str(preds[0]) + ' ' + str(preds[1]))
+    print(benign)
     # Order of probabilities is mal (preds[0]) then benign (preds[1])
     if preds[1] > preds[0]:
         print('Benign')
