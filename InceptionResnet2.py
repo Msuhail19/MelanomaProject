@@ -20,8 +20,8 @@ TRAIN_COUNT = 39525
 TEST_COUNT = 16940
 
 # Define used variables.
-EPOCHS = 30
-BATCH_SIZE = 16
+EPOCHS = 8
+BATCH_SIZE = 4
 STEPS_PER_EPOCH = TRAIN_COUNT//BATCH_SIZE
 VALIDATION_STEPS = TEST_COUNT//BATCH_SIZE
 WIDTH = 299
@@ -38,30 +38,33 @@ base_model = InceptionResNetV2(include_top=False,
                             input_tensor=None,
                             input_shape=(299,299,3))
 
+print(len(base_model.layers))
+
 # Unfreeze the last three inception modules
 for layer in base_model.layers:
     layer.trainable = False
+for layer in base_model.layers[:-770]:
+    layer.trainable = True
+
+print(len(base_model.trainable_weights))
 
 # set pooling activation etc.
 # Training new model
 x = base_model.output
 x = GlobalAveragePooling2D(name='avg_pool')(x)
-x = Dropout(0.6)(x)
+x = Dropout(0.4)(x)
 
 # Create output layer and add output layer to model.
 predictions = Dense(CLASSES, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-rms = k.optimizers.RMSprop(learning_rate=0.1, decay=0.9, epsilon=0.1)
-adam = k.optimizers.Adam(learning_rate=0.1, decay=0.9, epsilon=0.1)
-sgd = k.optimizers.SGD(learning_rate=0.01, momentum=0.9, decay=0.9)
-model.compile(optimizer=sgd,
+rms = k.optimizers.RMSprop(learning_rate=0.01, decay=0.9, epsilon=0.1)
+model.compile(optimizer=rms,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
 # data prep
 train_datagen = ImageDataGenerator(
-    rescale=1. / 255,
     preprocessing_function=preprocess_input,
     rotation_range=30,
     brightness_range=[0.5, 1.5],
@@ -73,7 +76,6 @@ train_datagen = ImageDataGenerator(
     fill_mode='constant')
 
 validation_datagen = ImageDataGenerator(
-    rescale=1. / 255,
     preprocessing_function=preprocess_input,
     )
 
@@ -92,11 +94,8 @@ validation_generator = validation_datagen.flow_from_directory(
     class_mode='categorical')
 
 
-img = train_generator[0]
-img2 = validation_generator[0]
-
 # Set Checkpoint
-filepath = "saved_model/ResNetAdjusted/InceptionResNet-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
+filepath = "Models/ResNet/InceptionResNet1070-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
 checkpoint = k.callbacks.callbacks.ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=False,
                                                    mode='max')
 
@@ -115,7 +114,7 @@ def my_gen(gen):
 # Save the model with best weights
 bestcheckpoint = ModelCheckpoint('ResnetBestModel.model', verbose=1, save_best_only=True, monitor='val_acc', mode='max')
 
-# Begin fitting model
+
 history = model.fit_generator(
     my_gen(train_generator),
     epochs=EPOCHS,

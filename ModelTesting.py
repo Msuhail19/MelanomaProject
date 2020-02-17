@@ -1,7 +1,7 @@
 import numpy as np
 import keras
 from keras.preprocessing import image
-from keras.applications.inception_v3 import preprocess_input
+from keras.applications.inception_resnet_v2 import preprocess_input
 from keras.models import load_model
 from glob import glob
 import tensorboard
@@ -9,10 +9,11 @@ import tensorboard
 
 HEIGHT = 299
 WIDTH = 299
-MODEL_FILE = 'FineTuning Inception/187 Trainable Weights/Inception3-BATCH 16-0515BRIGHTNESS-09-.model'
+MODEL_FILE = 'Models/ResNet/ResNet/InceptionResNet-BATCH 32-01-.model'
 test_dir = 'E:/SkinDirectory/Train'
-benign_imgs = glob('E:/Original/Independent/Naevus No Sticker/*')
-mal_imgs = glob('E:/Original/Independent/Melanoma/*')
+benign_imgs = glob('E:/Totally Independant/Benign No Sticker/*')
+mal_imgs = glob('E:/Totally Independant/Melanoma Aug/*')
+benign_imgs2 = glob()
 
 loaded_model = load_model(MODEL_FILE)
 loaded_model.is_trainable = True

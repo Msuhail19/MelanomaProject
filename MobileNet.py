@@ -1,11 +1,12 @@
 # Import all libraries
 import datetime
 import keras as k
+import tensorflow as tf
 from IPython.core.display import display
-from keras.applications.inception_v3 import InceptionV3, preprocess_input
+from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 from keras.callbacks import ModelCheckpoint
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout, Input
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.preprocessing.image import ImageDataGenerator
 
 # This code initialises base_model as the inception v3 model without output layer
@@ -16,11 +17,11 @@ print(datetime.datetime.now())
 CLASSES = 2
 
 # Number of images in training and validation
-TRAIN_COUNT = 48160
-TEST_COUNT = 12041
+TRAIN_COUNT = 39525
+TEST_COUNT = 16940
 
 # Define used variables.
-EPOCHS = 8
+EPOCHS = 5
 BATCH_SIZE = 32
 STEPS_PER_EPOCH = TRAIN_COUNT // BATCH_SIZE
 VALIDATION_STEPS = TEST_COUNT // BATCH_SIZE
@@ -28,21 +29,19 @@ WIDTH = 299
 HEIGHT = 299
 
 # Define directories
-TRAIN_DIR = 'E:/Generate 2/Train'
-TEST_DIR = 'E:/Generate 2/Test'
-filepath_epoch = "Models Gen 2/Inception3-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
+TRAIN_DIR = 'E:/Generate/Train'
+TEST_DIR = 'E:/Generate/Test'
+filepath_epoch = "MobileNetRand-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
 
 # Model used is inception with imagenet weights by default
 # Remove output layer as we are replacing it with out own
-base_model = InceptionV3(weights='imagenet', include_top=False)
+base_model = MobileNetV2(include_top=False)
 
 print(len(base_model.layers))
-print(len(base_model.trainable_weights))
 
-# Unfreeze the last three inception modules
 for layer in base_model.layers:
     layer.trainable = False
-for layer in base_model.layers[:-180]:
+for layer in base_model.layers[:-23]:
     layer.trainable = True
 
 print(len(base_model.trainable_weights))
@@ -57,9 +56,8 @@ x = Dropout(0.4)(x)
 predictions = Dense(CLASSES, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-
-
-opt = k.optimizers.RMSprop(learning_rate=0.007, decay=0.9, epsilon=0.1)
+# Compile model with optimizer
+opt = k.optimizers.RMSprop(learning_rate=0.01, decay=0.9, epsilon=0.1)
 model.compile(optimizer=opt,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
@@ -67,12 +65,12 @@ model.compile(optimizer=opt,
 # data prep
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
+    rotation_range=30,
     brightness_range=[0.6, 1.4],
     width_shift_range=0.1,
     height_shift_range=0.1,
     shear_range=0.1,
     zoom_range=0.1,
-    vertical_flip=True,
     horizontal_flip=True,
     fill_mode='reflect')
 
@@ -96,6 +94,9 @@ validation_generator = validation_datagen.flow_from_directory(
 # Set Checkpoint
 checkpoint = k.callbacks.callbacks.ModelCheckpoint(filepath_epoch, monitor='val_acc', verbose=1, save_best_only=False,
                                                    mode='max')
+early_stopping = k.callbacks.callbacks.EarlyStopping(monitor='val_loss', min_delta=1e-10, patience=15, verbose=1)
+reduce_lr = k.callbacks.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=8, verbose=1, mode='min',
+                                                    min_lr=0.00001)
 
 
 # If an image is unreadable drop the batch
@@ -108,16 +109,11 @@ def my_gen(gen):
             pass
 
 
-# Have a checkpoint to store the best
-# Save the model with best weights
-bestcheckpoint = ModelCheckpoint('saved_model/InceptionBestVersion.model', verbose=1, save_best_only=True,
-                                 monitor='val_acc', mode='max')
-
 # Begin fitting model
 history = model.fit_generator(
     my_gen(train_generator),
     epochs=EPOCHS,
-    callbacks=[checkpoint],
+    callbacks=[checkpoint, early_stopping, reduce_lr],
     steps_per_epoch=STEPS_PER_EPOCH,
     validation_data=my_gen(validation_generator),
     validation_steps=VALIDATION_STEPS,
@@ -126,7 +122,7 @@ history = model.fit_generator(
 display(history.history)
 
 # File name is
-MODEL_FILE = 'Inception' + str(BATCH_SIZE) + '.model'
+MODEL_FILE = 'MobileNet-' + str(BATCH_SIZE) + '-.model'
 
 model.save(MODEL_FILE)
 
