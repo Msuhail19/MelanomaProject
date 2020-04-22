@@ -9,14 +9,14 @@ import shutil
 # First seperate mole images randomly into train and test
 # Create train and test directories
 
-melanoma = glob('E:/Generate 2/Train/Melanoma/*')
-benign = glob('E:/Generate 2/Train/naevus/*')
-test_dir = 'E:/Generate 2/Test'
-benign_dir = 'E:/Generate 2/Test/Naevus'
-melanoma_dir = 'E:/Generate 2/Test/Melanoma'
+melanoma = glob(R'E:\Attempt 3\Original/Melanoma/*')
+benign = glob(R'E:\Attempt 3\Original/naevus/*')
+test_dir = R'E:\Attempt 3\Validation'
+benign_dir = test_dir + '/Naevus'
+melanoma_dir = test_dir + '/Melanoma'
 
-melanoma_train, melanoma_test = train_test_split(melanoma, test_size=0.20, random_state=np.random)
-benign_train, benign_test = train_test_split(benign, test_size=0.20, random_state=np.random)
+melanoma_train, melanoma_test = train_test_split(melanoma, test_size=0.05, random_state=np.random)
+benign_train, benign_test = train_test_split(benign, test_size=0.05, random_state=np.random)
 
 # Create new Directory test
 os.mkdir(test_dir)

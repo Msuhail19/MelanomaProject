@@ -16,20 +16,21 @@ print(datetime.datetime.now())
 CLASSES = 2
 
 # Number of images in training and validation
-TRAIN_COUNT = 39525
-TEST_COUNT = 16940
+TRAIN_COUNT = 25044
+TEST_COUNT = 6589
 
 # Define used variables.
 EPOCHS = 8
-BATCH_SIZE = 4
+BATCH_SIZE = 32
 STEPS_PER_EPOCH = TRAIN_COUNT//BATCH_SIZE
 VALIDATION_STEPS = TEST_COUNT//BATCH_SIZE
 WIDTH = 299
 HEIGHT = 299
+LR = 0.01
 
 # Define directories
-TRAIN_DIR = 'E:/Generate/Train'
-TEST_DIR = 'E:/Generate/Test'
+TRAIN_DIR = 'E:/Final Generated/Train'
+TEST_DIR = 'E:/Final Generated/Test'
 
 # Model used is inception with imagenet weights by default
 # Remove output layer as we are replacing it with out own
@@ -39,11 +40,12 @@ base_model = InceptionResNetV2(include_top=False,
                             input_shape=(299,299,3))
 
 print(len(base_model.layers))
+print(len(base_model.trainable_weights))
 
 # Unfreeze the last three inception modules
 for layer in base_model.layers:
     layer.trainable = False
-for layer in base_model.layers[:-770]:
+for layer in base_model.layers[:-750]:
     layer.trainable = True
 
 print(len(base_model.trainable_weights))
@@ -52,13 +54,13 @@ print(len(base_model.trainable_weights))
 # Training new model
 x = base_model.output
 x = GlobalAveragePooling2D(name='avg_pool')(x)
-x = Dropout(0.4)(x)
+x = Dropout(0.5)(x)
 
 # Create output layer and add output layer to model.
 predictions = Dense(CLASSES, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
-rms = k.optimizers.RMSprop(learning_rate=0.01, decay=0.9, epsilon=0.1)
+rms = k.optimizers.RMSprop(learning_rate=LR, decay=0.9, epsilon=0.1)
 model.compile(optimizer=rms,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
@@ -66,7 +68,7 @@ model.compile(optimizer=rms,
 # data prep
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
-    rotation_range=30,
+    rotation_range=360,
     brightness_range=[0.5, 1.5],
     width_shift_range=0.1,
     height_shift_range=0.1,
@@ -83,8 +85,7 @@ train_generator = train_datagen.flow_from_directory(
     TRAIN_DIR,
     target_size=(HEIGHT, WIDTH),
     batch_size=BATCH_SIZE,
-    class_mode='categorical',
-    shuffle=False)
+    class_mode='categorical',)
 
 #
 validation_generator = validation_datagen.flow_from_directory(
@@ -115,6 +116,11 @@ def my_gen(gen):
 bestcheckpoint = ModelCheckpoint('ResnetBestModel.model', verbose=1, save_best_only=True, monitor='val_acc', mode='max')
 
 
+# Begin fitting model
+class_weight = {0: 5.,
+                1: 1.}
+
+
 history = model.fit_generator(
     my_gen(train_generator),
     epochs=EPOCHS,
@@ -122,7 +128,9 @@ history = model.fit_generator(
     steps_per_epoch=STEPS_PER_EPOCH,
     validation_data=my_gen(validation_generator),
     validation_steps=VALIDATION_STEPS,
-    verbose =2)
+    class_weight=class_weight,
+    shuffle=True,
+    verbose=1)
 
 display(history.history)
 

@@ -1,10 +1,11 @@
 import numpy as np
 import keras
 from keras.preprocessing import image
-from keras.applications.inception_resnet_v2 import preprocess_input
+from keras.applications.inception_v3 import preprocess_input
 from keras.models import load_model
 from glob import glob
 import tensorboard
+
 
 
 HEIGHT = 299
@@ -12,8 +13,7 @@ WIDTH = 299
 MODEL_FILE = 'Models/ResNet/ResNet/InceptionResNet-BATCH 32-01-.model'
 test_dir = 'E:/SkinDirectory/Train'
 benign_imgs = glob('E:/Totally Independant/Benign No Sticker/*')
-mal_imgs = glob('E:/Totally Independant/Melanoma Aug/*')
-benign_imgs2 = glob()
+mal_imgs = glob('E:/Totally Independant/Melanoma Internet/*')
 
 loaded_model = load_model(MODEL_FILE)
 loaded_model.is_trainable = True
@@ -69,6 +69,8 @@ for benign in benign_imgs:
     elif preds[0] > preds[1]:
         print('Malignant')
         mal_no = mal_no + 1
+
+
 
 print('\nFinal Benign accuracy is :', end='')
 if len(benign_imgs) is not 0 :

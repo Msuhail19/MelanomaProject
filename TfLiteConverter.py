@@ -1,15 +1,12 @@
 import tensorflow as tf
-import keras as k
 
+# Load trainining model save as final model
+model_dir = R'E:\Attempt 6\Inception3-0005-Attempt4-NODROPOUT-BATCH 32-25-.model'
+old_model = tf.keras.models.load_model(model_dir)
 
+# Converter
+converter = tf.lite.TFLiteConverter.from_keras_model(old_model)
 
-
-# Choose file to convert
-saved_model_dir = './saved_model.pb'
-model = tf.keras.models.load_model(saved_model_dir)
-
-# Define converter function and save converter file
-converter = tf.lite.TFLiteConverter.from_keras_model('saved_model.pb')
+# Convert and save
 tflite_model = converter.convert()
-
-open("converted_model.lite", "wb").write(tflite_model)
+open("ConvertedFinalModel.tflite", "wb").write(tflite_model)

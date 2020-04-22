@@ -35,7 +35,7 @@ filepath_epoch = "MobileNetRand-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model
 
 # Model used is inception with imagenet weights by default
 # Remove output layer as we are replacing it with out own
-base_model = MobileNetV2(include_top=False)
+base_model = MobileNetV2(weights='imagenet', include_top=False)
 
 print(len(base_model.layers))
 

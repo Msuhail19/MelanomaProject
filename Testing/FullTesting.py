@@ -10,16 +10,16 @@ HEIGHT = 299
 WIDTH = 299
 
 # Model directory
-MODEL_FILE = 'Models/FineTuning Inception/82 Trainable Weights, 74% val acc/Inception3-BATCH 32-03-.model'
+MODEL_FILE = R'E:\Attempt 6\Inception3-0005-Attempt4-NODROPOUT-BATCH 32-25-.model'
 
 # Load model
 loaded_model = load_model(MODEL_FILE)
 
 # Directories of images to test against
-benign_imgs = glob('E:/Totally Independant/Benign Nevi No sticker/*')
-benign_imgs2 = glob('E:/Totally Independant/Benign Nevi/*')
-mal_imgs = glob('E:/Totally Independant/Melanoma Aug/*')
-mal_imgs2 = glob('E:/Totally Independant/Melanoma Internet/*')
+benign_imgs = glob(R'E:\Attempt 6\Original\Naevus/*')
+benign_imgs2 = glob('E:/Images/Totally Independant/Benign Nevi/*')
+mal_imgs = glob(R'E:\Attempt 6\Original\Melanoma/*')
+mal_imgs2 = glob('E:/Images/Totally Independant/Melanoma Internet/*')
 
 # Method to predict and return predictions
 def predict(img):
@@ -42,7 +42,7 @@ def iterate(list):
         count = count + 1
         print(str(count) + ' ' + str(preds[0]) + ' ' + str(preds[1]))
         print(item)
-        if preds[1] > 0.65:
+        if preds[1] > preds[0]:
             print('Benign')
             benign_no = benign_no + 1
         else:
@@ -52,11 +52,6 @@ def iterate(list):
     return benign_no, mal_no
 
 # For each image dir
-print('Predicting Malignant Images 2 ... ')
-ben_no, mal_no = iterate(mal_imgs2)
-acc4 = mal_no/len(mal_imgs2)
-print('Accuracy is ' + str(acc4))
-
 print('Predicting Malignant Images ... ')
 ben_no, mal_no = iterate(mal_imgs)
 acc3 = mal_no/len(mal_imgs)
@@ -67,13 +62,19 @@ ben_no , mal_no = iterate(benign_imgs)
 acc1 = ben_no/len(benign_imgs)
 print('Accuracy is ' + str(acc1))
 
-print('Predicting Benign 2 ...')
-ben_no, mal_no = iterate(benign_imgs2)
-acc2 = ben_no/len(benign_imgs2)
-print('Accuracy is ' + str(acc2))
+# print('Predicting Benign 2 ...')
+# ben_no, mal_no = iterate(benign_imgs2)
+# acc2 = ben_no/len(benign_imgs2)
+# print('Accuracy is ' + str(acc2))
+
+print('Predicting Malignant Images 2 ... ')
+ben_no, mal_no = iterate(mal_imgs2)
+acc4 = mal_no/len(mal_imgs2)
+print('Accuracy is ' + str(acc4))
 
 
-print('Malignant acc in order is : ' + str(acc3) + ' , ' + str(acc4))
-print('Benign acc in order is : ' + str(acc1) + ' , ' + str(acc2))
+print('Malignant acc in order is : ' + str(acc3) + ' , ')
+print('Benign acc in order is : ' + str(acc1) )
+
 
 

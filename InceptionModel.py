@@ -1,65 +1,72 @@
 # Import all libraries
 import datetime
 import keras as k
+import pandas
 from IPython.core.display import display
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout, Input
 from keras.models import Model
 from keras.preprocessing.image import ImageDataGenerator
 
-# This code initialises base_model as the inception v3 model without output layer
-# We will create out own specific output layer
-print(datetime.datetime.now())
+
 
 # Initialise variable classes
 CLASSES = 2
 
 # Number of images in training and validation
-TRAIN_COUNT = 48160
-TEST_COUNT = 12041
+TRAIN_COUNT = 9909
+TEST_COUNT = 2636
 
 # Define used variables.
-EPOCHS = 8
+EPOCHS = 60
 BATCH_SIZE = 32
 STEPS_PER_EPOCH = TRAIN_COUNT // BATCH_SIZE
 VALIDATION_STEPS = TEST_COUNT // BATCH_SIZE
 WIDTH = 299
 HEIGHT = 299
+LEARNING_RATE = 0.01
 
 # Define directories
-TRAIN_DIR = 'E:/Generate 2/Train'
-TEST_DIR = 'E:/Generate 2/Test'
-filepath_epoch = "Models Gen 2/Inception3-BATCH " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
+TRAIN_DIR = 'E:\Attempt 6\Original'
+TEST_DIR = 'E:\Attempt 6\Test'
+filepath_epoch = R"E:\Attempt 6/Inception3-Attempt5-WithNewLayers " + str(BATCH_SIZE) + "-{epoch:02d}-.model"
 
 # Model used is inception with imagenet weights by default
 # Remove output layer as we are replacing it with out own
-base_model = InceptionV3(weights='imagenet', include_top=False)
+base_model = InceptionV3(weights='imagenet', include_top=False, input_shape=[HEIGHT,WIDTH,3])
 
 print(len(base_model.layers))
 print(len(base_model.trainable_weights))
 
-# Unfreeze the last three inception modules
+# Unfreeze inception modules
 for layer in base_model.layers:
     layer.trainable = False
-for layer in base_model.layers[:-180]:
+for layer in base_model.layers[:-70]:
     layer.trainable = True
 
 print(len(base_model.trainable_weights))
+print(LEARNING_RATE)
 
 # set pooling activation etc.
 # Training new model
 x = base_model.output
 x = GlobalAveragePooling2D(name='avg_pool')(x)
-x = Dropout(0.4)(x)
+
+# # Add new layers with dropout
+# x = Dense(1024, activation="relu")(x)
+# x = Dense(512, activation="relu")(x)
+
 
 # Create output layer and add output layer to model.
 predictions = Dense(CLASSES, activation='softmax')(x)
 model = Model(inputs=base_model.input, outputs=predictions)
 
+print(len(model.trainable_weights))
+print(LEARNING_RATE)
 
 
-opt = k.optimizers.RMSprop(learning_rate=0.007, decay=0.9, epsilon=0.1)
+opt = k.optimizers.RMSprop(learning_rate=LEARNING_RATE, decay=0.9, epsilon=0.1)
 model.compile(optimizer=opt,
               loss='categorical_crossentropy',
               metrics=['accuracy'])
@@ -67,14 +74,12 @@ model.compile(optimizer=opt,
 # data prep
 train_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
-    brightness_range=[0.6, 1.4],
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.1,
-    zoom_range=0.1,
+    brightness_range=[0.7, 1.3],
+    zoom_range=0.2,
+    rotation_range=360,
     vertical_flip=True,
     horizontal_flip=True,
-    fill_mode='reflect')
+    fill_mode='nearest')
 
 validation_datagen = ImageDataGenerator(
     preprocessing_function=preprocess_input,
@@ -97,6 +102,13 @@ validation_generator = validation_datagen.flow_from_directory(
 checkpoint = k.callbacks.callbacks.ModelCheckpoint(filepath_epoch, monitor='val_acc', verbose=1, save_best_only=False,
                                                    mode='max')
 
+from datetime import datetime
+
+now = datetime.now()
+date_time = now.strftime("%m-%d-%Y")
+
+csv_logger = CSVLogger('model_history - ' + date_time + '.csv', append=True)
+
 
 # If an image is unreadable drop the batch
 def my_gen(gen):
@@ -110,25 +122,58 @@ def my_gen(gen):
 
 # Have a checkpoint to store the best
 # Save the model with best weights
-bestcheckpoint = ModelCheckpoint('saved_model/InceptionBestVersion.model', verbose=1, save_best_only=True,
-                                 monitor='val_acc', mode='max')
+bestcheckpoint = ModelCheckpoint('E:/Models/InceptionBestVersion.model', verbose=1, save_best_only=True,
+                                 monitor='val_loss', mode='min')
 
 # Begin fitting model
+
+reducelr = ReduceLROnPlateau(monitor='val_loss', patience=4, factor=0.5, min_lr=0.001, cooldown=1)
+class_weight = {0: 5,
+                1: 1}
+
 history = model.fit_generator(
     my_gen(train_generator),
     epochs=EPOCHS,
-    callbacks=[checkpoint],
+    callbacks=[csv_logger, reducelr, checkpoint],
     steps_per_epoch=STEPS_PER_EPOCH,
     validation_data=my_gen(validation_generator),
+    shuffle=True,
     validation_steps=VALIDATION_STEPS,
+    class_weight=class_weight,
     verbose=1)
 
 display(history.history)
+SAVE = 'Newest history' + '.csv'
+pandas.DataFrame.from_dict(history.history).to_csv(SAVE, index=False)
+
 
 # File name is
 MODEL_FILE = 'Inception' + str(BATCH_SIZE) + '.model'
-
 model.save(MODEL_FILE)
 
+import matplotlib.pyplot as plt
+
+def plot_training(history):
+    acc = history.history['acc']
+    val_acc = history.history['val_acc']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    epochs = range(len(acc))
+
+    plt.plot(epochs, acc, 'b')
+    plt.plot(epochs, val_acc, 'r')
+    plt.title("Training and validation accuracy")
+
+    plt.figure()
+    plt.plot(epochs, loss, 'b')
+    plt.plot(epochs, val_loss, 'r')
+    plt.title("Training and validation loss")
+
+    plt.show()
+    plt.savefig("Training and validation accuracy.png")
+
+
+plot_training(history)
+
 print('Finished At : ')
-print(datetime.datetime.now())
+print(datetime.now())

@@ -1,18 +1,17 @@
-from keras.preprocessing.image import ImageDataGenerator, img_to_array, array_to_img, load_img
 from glob import glob
 import random
 import math
 from PIL import Image
-import shutil
 
 # Folder to generate large number of images
+img_to_aug = glob(R'E:\Attempt 2\Original\Naevus/*.*')
 
-img_to_aug = sorted(glob('E:/Generate/Gen/*.*'))
 print(img_to_aug)
-save_dir = 'E:/Generate/Gen/Generate Naevus'  # save gen files to following dir
+# save gen files to following dir
+save_dir = R'E:\Attempt 2\Train/Naevus'
+
 # times per image to gen randomised version
-rotated_to_create = 5
-no_files_transform = 2
+rotated_to_create = 2
 
 
 # THE FOLLOWING CODE TAKES A RECTANGLE, ROTATES IT
@@ -45,62 +44,59 @@ def rotatedRectWithMaxArea(w, h, angle):
 
     return wr, hr
 
+def rotateAndAugmentImage(image, count, x):
+    img = Image.open(image)
+    rand = random.randint(0, 180)
+    print('rotated ' + str(rand))
+    width, height = img.size
+    new_width, new_height = rotatedRectWithMaxArea(width, height, math.radians(rand))
+    rotated = img.rotate(rand, expand=True)
 
-#
+    # Save the rotated and print rotated dimensions
+    print(str(new_width) + ',' + str(new_height))
+
+    #rotated.save(save_dir + '/GEN' + str(count) + '-RC-' + str(x) + '-' + str(rand) + '.jpg')
+
+    # Calculate coordinates to crop
+    width, height = rotated.size
+    left = (width - new_width) / 2
+    top = (height - new_height) / 2
+    right = (width + new_width) / 2
+    bottom = (height + new_height) / 2
+
+    rotated1 = rotated.crop((left, top, right, bottom))
+    print("Saving...")
+    try:
+        rotated1.save(save_dir + '/GEN2' + str(count) + '-' + str(x) + '.jpg')
+    except(Exception):
+        rotated1.save(save_dir + '/GEN2' + str(count) + '-' + str(x) + '.png')
+
+
+
+
 # Code to generate rotated and cropped images
-
 # Iterate over existing and rotate and crop
 count = 0
 for image in img_to_aug:
-    for x in range(rotated_to_create):
-        # Open image, generate random angle to rotate and call rotatedRectWithMaxArea
-        # to get new height and width
-        img = Image.open(image)
-        rand = random.randint(0, 359)
-        print('rotated ' + str(rand))
-        width, height = img.size
-        new_width, new_height = rotatedRectWithMaxArea(width, height, math.radians(rand))
-        rotated = img.rotate(rand, expand=True)
-
-        # Save the rotated and print rotated dimensions
-        print(str(new_width) + ',' + str(new_height))
-
-        # Calculate coordinates to crop
-        width, height = rotated.size
-        left = (width - new_width) / 2
-        top = (height - new_height) / 2
-        right = (width + new_width) / 2
-        bottom = (height + new_height) / 2
-
-        rotated1 = rotated.crop((left, top, right, bottom))
-
+    # Open image, generate random angle to rotate and call rotatedRectWithMaxArea
+    # to get new height and width
+    print('Image : ' + str(count))
+    while True:
         try:
-            rotated1.save(save_dir + '/GEN' + str(count) + '-RC-' + str(x) + '-' + str(rand) + '.jpg')
-        except:
-            rotated1.save(save_dir + '/GEN' + str(count) + '-RC-' + str(x) + '-' + str(rand) + '.png')
+            rotateAndAugmentImage(image, count, 1)
+            break
+        except(Exception):
+            print(Exception)
+            continue
+
+    while True:
+        try:
+            rotateAndAugmentImage(image, count, 2)
+            break
+        except(Exception):
+            print(Exception)
+            continue
+
     count += 1
 
-datagen = ImageDataGenerator(
-    brightness_range=[0.8, 1.2],
-    horizontal_flip=True,
-    fill_mode='reflect', )
 
-print('create new')
-images = glob(save_dir + '/*')
-print(len(images))
-
-# If we are supposed to randomly transform then do just that
-count = 0
-if no_files_transform > 0:
-    for image in images:
-        x = load_img(image)
-        x = img_to_array(x)
-        x = x.reshape((1,) + x.shape)
-        i = 0
-        for batch in datagen.flow(x, save_to_dir=save_dir, save_prefix='NEW' + str(count) + '-' + str(i) + 'NEW',
-                                  save_format='png',
-                                  batch_size=1):
-            if i >= no_files_transform:
-                break
-            i += 1
-        count += 1
