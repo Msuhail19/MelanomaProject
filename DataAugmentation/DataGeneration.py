@@ -4,11 +4,11 @@ import math
 from PIL import Image
 
 # Folder to generate large number of images
-img_to_aug = glob(R'E:\Attempt 2\Original\Naevus/*.*')
-
+img_to_aug = glob(R'E:\Attempt 2\Original\Melanoma/*.*')
 print(img_to_aug)
+
 # save gen files to following dir
-save_dir = R'E:\Attempt 2\Train/Naevus'
+save_dir = R'E:\Attempt 2\Compressed/Melanoma'
 
 # times per image to gen randomised version
 rotated_to_create = 2
@@ -46,6 +46,15 @@ def rotatedRectWithMaxArea(w, h, angle):
 
 def rotateAndAugmentImage(image, count, x):
     img = Image.open(image)
+
+    # Done to convert a bunch of data - remove at later point
+    try:
+        img.save(save_dir + '/' + str(count) + '.jpg')
+    except(Exception):
+        img.save(save_dir + '/' + str(count) + '.png')
+    finally:
+        return
+
     rand = random.randint(0, 180)
     print('rotated ' + str(rand))
     width, height = img.size
@@ -84,14 +93,6 @@ for image in img_to_aug:
     while True:
         try:
             rotateAndAugmentImage(image, count, 1)
-            break
-        except(Exception):
-            print(Exception)
-            continue
-
-    while True:
-        try:
-            rotateAndAugmentImage(image, count, 2)
             break
         except(Exception):
             print(Exception)
